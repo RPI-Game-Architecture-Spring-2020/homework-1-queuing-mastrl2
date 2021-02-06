@@ -17,19 +17,12 @@ ga_queue::ga_queue(int node_count)
 	// For extra credit, preallocate 'node_count' elements (instead of
 	// allocating on push).
 	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
-
-	/*node = new node() # Allocate a free node
-	node– > next.ptr = NULL # Make it the only node in the linked list
-	Q– > Head = Q– > Tail = node # Both Head and Tail point to it
-	Q– > H lock = Q– > T lock = FREE # Locks are initially free*/
 	
+	//Starting head node
 	node* h = new node();
 
-	HEAD = new node();
-	TAIL = new node();
-
-	HEAD->pnt = h;
-	TAIL->pnt = h;
+	HEAD = h;
+	TAIL = h;
 
 	maxNodes = node_count;
 }
@@ -40,14 +33,14 @@ ga_queue::~ga_queue()
 	// Free any resources held by the queue.
 	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
 
+	//Pops everything off the queue which destroys most of the queue
 	void* info = 0;
 	bool popped = true;
 	while (popped == true) {
 		popped = pop(&info);
 	}
-	free(HEAD->pnt);
+	//Lastly destroys the head node
 	free(HEAD);
-	free(TAIL);
 }
 
 void ga_queue::push(void* data)
@@ -59,24 +52,15 @@ void ga_queue::push(void* data)
 	// element off the queue.
 	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
 
-	/*
-	* node = new node() # Allocate a new node from the free list
-	node–>value = value # Copy enqueued value into node
-	node–>next.ptr = NULL # Set next pointer of node to NULL
-	lock(&Q–>T lock) # Acquire T lock in order to access Tail
-	Q–>Tail–>next = node # Link node at the end of the linked list
-	Q–>Tail = node # Swing Tail to node
-	unlock(&Q–>T lock) # Release T lock
-	*/
-
+	//Creates new node and adds value to it
 	node* temp = new node();
 	temp->value = data;
-	node* last = TAIL->pnt;
 
 	T_LOCK.lock();
 
-	last->pnt = temp;
+	//Resets where the tail points
 	TAIL->pnt = temp;
+	TAIL = temp;
 
 	T_LOCK.unlock();
 }
@@ -90,33 +74,19 @@ bool ga_queue::pop(void** data)
 	// Otherwise return true.
 	// See https://www.research.ibm.com/people/m/michael/podc-1996.pdf
 
-	/*
-	* lock(&Q–>H lock) # Acquire H lock in order to access Head
-	node = Q–>Head # Read Head
-	new head = node–>next # Read next pointer
-	if new head == NULL # Is queue empty?
-	unlock(&Q–>H lock) # Release H lock before return
-	return FALSE # Queue was empty
-	endif
-	*pvalue = new head–>value # Queue not empty. Read value before release
-	Q–>Head = new head # Swing Head to next node
-	unlock(&Q–>H lock) # Release H lock
-	free(node) # Free node
-	return TRUE # Queue was not empty, dequeue succeeded
-	*/
-
+	//Sets the first value node in the queue as the new head
 	H_LOCK.lock();
-	node* temp = HEAD->pnt->pnt;
-	//node* newHead = HEAD->pnt->pnt->pnt;
-	if (temp == nullptr) {
+	node* temp = HEAD;
+	node* newHead = HEAD->pnt;
+	if (newHead == nullptr) {
 		H_LOCK.unlock();
 		return false;
 	}
-	*data = temp->value;
-	//void* val = temp->data;
-	HEAD->pnt->pnt = temp->pnt;
+	//Setting up the new head and setting data to the removed value
+	*data = newHead->value;
+	HEAD = newHead;
 	H_LOCK.unlock();
-	//void * value 
+
 	free(temp);
 
 	return true;
@@ -124,17 +94,12 @@ bool ga_queue::pop(void** data)
 
 int ga_queue::get_count() const
 {
-	// TODO:
-	// Get the number of elements currently in the queue.
+	//Counts up the number of nodes by checking if the next node is a nullpntr
 	int count = 0;
-	//h = HEAD;
-	node* curr = HEAD->pnt;
+	node* curr = HEAD;
 	while (curr->pnt != nullptr) {
 		count += 1;
-		//node* next = curr->pnt;
 		curr = curr->pnt;
 	}
-	
-
 	return count;
 }

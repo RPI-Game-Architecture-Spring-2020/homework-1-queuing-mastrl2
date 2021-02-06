@@ -17,11 +17,12 @@
 class node
 {
 public:
-	node() { pnt = nullptr; value = nullptr; }
-	void changeNext(node* pnter) { pnt = pnter; }
-	void* next() { return pnt; }
+	//Creator, sets everything to null
+	node() { pnt = nullptr; value = NULL; }
+	//Destructor
+	~node() { free(value); free(pnt); }
 
-
+	//Next node and value of current node
 	node* pnt;
 	void* value;
 };
@@ -38,11 +39,10 @@ public:
 
 	int get_count() const;
 
-
+	//Added head and tail nodes, along with the mutexes
 	node* HEAD;
 	node* TAIL;
 
-	//if false, the lock is free
 	std::mutex H_LOCK;
 	std::mutex T_LOCK;
 	int maxNodes;
